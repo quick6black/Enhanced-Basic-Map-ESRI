@@ -61,7 +61,7 @@
                 else
                 {
                     zoomToCurrentLocationImg.source = m_gpsB;
-                    geo.addEventListener(GeolocationEvent.UPDATE, onUpdate);
+					geo.addEventListener(GeolocationEvent.UPDATE, onUpdate);
                 }
             }
 
