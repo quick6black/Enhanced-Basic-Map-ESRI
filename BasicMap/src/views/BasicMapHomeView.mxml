@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:View xmlns:fx="http://ns.adobe.com/mxml/2009"
+        xmlns:s="library://ns.adobe.com/flex/spark"
+        xmlns:esri="http://www.esri.com/2008/ags"
+        title="GPS Demo">
+
+    <fx:Script>
+        <![CDATA[
+            import com.esri.ags.Graphic;
+            import com.esri.ags.events.ExtentEvent;
+            import com.esri.ags.events.GeometryServiceEvent;
+            import com.esri.ags.events.MapEvent;
+            import com.esri.ags.geometry.Geometry;
+            import com.esri.ags.geometry.MapPoint;
+            import com.esri.ags.geometry.Polygon;
+            import com.esri.ags.symbols.PictureMarkerSymbol;
+            import com.esri.ags.tasks.supportClasses.BufferParameters;
+			import com.esri.ags.tasks.supportClasses.ProjectParameters
+            import com.esri.ags.utils.WebMercatorUtil;
+            
+            import flash.sensors.Geolocation;
+
+            [Embed(source="/assets/gpsA.png")]
+            private var m_gpsA:Class;
+            [Embed(source="/assets/gpsB.png")]
+            private var m_gpsB:Class;
+			
+			private var GPSPoint:MapPoint;		
+			private var pt:MapPoint;
+            private var geo:Geolocation;
+
+			//Load GPS icon if GPS is present
+            protected function myMap_loadHandler(event:MapEvent):void
+            {
+                if (Geolocation.isSupported==true)
+                {
+					//Initialize the location sensor.
+                    geo = new Geolocation;
+					//set update interval
+					geo.setRequestedUpdateInterval(5000);
+					//add GPS toggle button
+					zoomToCurrentLocationImg.source = m_gpsA;
+					zoomToCurrentLocationImg.visible = true;
+                }
+				else
+				{
+					//do not show a GPS Icon
+				}
+            }
+			//activate the GPS
+            protected function locateGPS(event:MouseEvent):void
+            {
+                if (myGraphicsLayer.numGraphics > 0)
+                {
+                    myGraphicsLayer.clear();
+					GPSGraphicsLayer.clear();
+					accBorder.visible = false;
+                    zoomToCurrentLocationImg.source = m_gpsA;
+					geo.removeEventListener(GeolocationEvent.UPDATE, onUpdate);
+                }
+                else
+                {
+                    zoomToCurrentLocationImg.source = m_gpsB;
+                    geo.addEventListener(GeolocationEvent.UPDATE, onUpdate);
+                }
+            }
+
+			//geolocation event listener		
+			private function onUpdate(event:GeolocationEvent):void 
+			{ 
+				var long:String = event.longitude.toString();
+				var lat:String = event.latitude.toString();
+				var ha:Number = event.horizontalAccuracy;
+				accText.text = ha.toString();
+				var longnew:Number = Number(long);
+				var latnew:Number = Number(lat);
+				var GPSPoint:MapPoint = new MapPoint(longnew, latnew);
+				GPSPoint.spatialReference = new SpatialReference(4326);	
+				var projParams:ProjectParameters = new ProjectParameters();
+				projParams.geometries = [GPSPoint];
+				projParams.outSpatialReference = myMap.spatialReference;
+				geometryService.project(projParams);
+
+			} 
+			
+			//reproject event 
+			private function projectCompleteHandler(event:GeometryServiceEvent):void
+			{ 
+				try
+				{
+					// Note: As of version 2.0, GeometryService returns geometries (instead of graphics)						
+					var pt:MapPoint = (event.result as Array)[0]as MapPoint;
+					var ptGraphic:Graphic = new Graphic(null,GPSicon);
+					ptGraphic.geometry = pt; 
+					myGraphicsLayer.clear()
+					GPSGraphicsLayer.clear()
+					accBorder.visible = true;
+					myGraphicsLayer.add(ptGraphic);
+					//add buffer code for GPS horizontal accuracy
+					var bufferParameters:BufferParameters = new BufferParameters();
+					bufferParameters.geometries = [ pt ];
+					bufferParameters.distances = [ accText.text ];
+					bufferParameters.unit = GeometryService.UNIT_METER;
+					bufferParameters.bufferSpatialReference = myMap.spatialReference;
+					bufferParameters.outSpatialReference = myMap.spatialReference;					
+					geometryService.addEventListener(GeometryServiceEvent.BUFFER_COMPLETE, bufferCompleteHandler);
+					geometryService.buffer(bufferParameters);					
+					function bufferCompleteHandler(event:GeometryServiceEvent):void
+					{
+						geometryService.removeEventListener(GeometryServiceEvent.BUFFER_COMPLETE, bufferCompleteHandler);
+						// Note: As of version 2.0, GeometryService returns geometries (instead of graphics)
+						for each (var geometry:Polygon in event.result)
+						{
+							var graphic:Graphic = new Graphic();
+							graphic.geometry = geometry;
+							graphic.symbol = fillSymbol;
+							GPSGraphicsLayer.add(graphic);
+						}
+					}
+					if (zoomToCurrentLocationImg.source == m_gpsB)
+					{
+						myMap.centerAt(pt)
+					}					
+					else
+					{
+				//		geo.removeEventListener(GeolocationEvent.UPDATE, onUpdate);
+				//		myGraphicsLayer.clear();
+						GPSGraphicsLayer.clear();
+					}					 
+				}
+				catch (error:Error)
+				{
+					//Alert.show(error.toString());
+				}
+			}	
+        ]]>
+    </fx:Script>
+
+    <fx:Declarations>
+		<!--GPS accuracy Polygon-->
+		<esri:SimpleFillSymbol id="fillSymbol" color="0x81BEF7"  alpha=".5">
+			<esri:outline>
+				<esri:SimpleLineSymbol width="2" color="0x0040FF"/>
+			</esri:outline>
+		</esri:SimpleFillSymbol>
+		<!--GPS icon-->
+		<esri:PictureMarkerSymbol  id="GPSicon" source="@Embed(source='assets/gps.png')"/>
+        <s:Fade id="fade" alphaFrom="1"  alphaTo="0" duration="1500"/>
+		<esri:GeometryService id="geometryService" showBusyCursor="false" projectComplete="projectCompleteHandler(event)"  
+				url="http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer"/>
+    </fx:Declarations>	
+    <!-- Map Control -->
+    <esri:Map id="myMap" level="2" load="myMap_loadHandler(event)" wrapAround180="true" zoomSliderVisible="false">
+        <esri:extent>
+            <esri:Extent xmin="-19325128.942" ymin="-10948057.675" xmax="-539964.871" ymax="18364625.427">
+                <esri:SpatialReference wkid="102100"/>
+            </esri:Extent>
+        </esri:extent>
+        <esri:ArcGISTiledMapServiceLayer url="http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer"/>
+		<esri:GraphicsLayer id="GPSGraphicsLayer"/>	
+        <esri:GraphicsLayer id="myGraphicsLayer" symbol="{new PictureMarkerSymbol}"/>	
+    </esri:Map>
+    <s:Image id="zoomToCurrentLocationImg"  bottom="0" click="locateGPS(event)" horizontalCenter="0" visible="false"/>
+	<s:BorderContainer id="accBorder" top="0" horizontalCenter="0" borderVisible="true" borderWeight="3" cornerRadius="10" visible="false">
+		<s:HGroup horizontalAlign="center" width="100%" paddingLeft="5" paddingBottom="5" paddingTop="5" paddingRight="5">
+			<s:Label id="accText" textAlign="center"/>
+			<s:Label id="accTexttype" textAlign="center" text=" Meters"/>
+		</s:HGroup>
+	</s:BorderContainer>
+</s:View>

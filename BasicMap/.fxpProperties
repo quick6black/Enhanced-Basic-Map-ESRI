@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fxpProperties abbreviated="false" authoringTool="Flex Builder" compiles="true" parentProject="43a867b0-c255-46e6-95be-abe52956cf96" projectUUID="43a867b0-c255-46e6-95be-abe52956cf96" pureCatalystProject="false" sdkVersion="4.6.0" uuid="b768cbee-aed4-4e78-ab27-7a0b15f3fa97" version="15">
+  <projects/>
+  <src/>
+  <swc>
+    <linked location="sdkPlaceHolder" path="sdkPlaceHolder" position="0" uuid="b768cbee-aed4-4e78-ab27-7a0b15f3fa97"/>
+    <linked location="C:/Users/anash/Documents/Flex Builder 4.5.1/basicmap/BasicMap/libs" path="/libs" position="1" uuid="b768cbee-aed4-4e78-ab27-7a0b15f3fa97"/>
+    <linked location="C:/Users/nasha001/Downloads/9.3_Server_Code/flex/arcgis_api_for_flex_3_0/ArcGIS_Flex/libs/agslib-3.0-2012-06-06.swc" path="/linked-swc/agslib-3.0-2012-06-06.swc" position="2" uuid="b768cbee-aed4-4e78-ab27-7a0b15f3fa97"/>
+  </swc>
+  <misc/>
+  <theme/>
+  <mxmlFormattingPrefs groupAttributesByState="true" maxLineWidth="100" mxmlAlignAttributes="true" mxmlAttributeOrder="id,userLabel,includeIn,excludeFrom,visible,x,y,z,left,right,top,bottom,width,height,minWidth,minHeight,maxWidth,maxHeight,label" mxmlKeepAttributeValuesOrganized="true"/>
+</fxpProperties>
